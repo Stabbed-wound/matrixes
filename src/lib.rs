@@ -50,9 +50,7 @@ impl<T> Matrix<T> where T: Copy {
     pub fn new_identity(n: usize) -> Self where T: Zero + One {
         Self {
             data: (0..n.pow(2))
-                .map(|i| {
-                    if i % (n + 1) == 0 { T::one() } else { T::zero() }
-                })
+                .map(|i| if i % (n + 1) == 0 { T::one() } else { T::zero() })
                 .collect(),
             rows: n,
             columns: n,
@@ -95,40 +93,45 @@ impl<T> Matrix<T> where T: Copy {
     /// # Errors
     ///
     /// If data has rows, rows must all be of the same, non-zero length.
-    pub fn new_from_data(data: &[Vec<T>]) -> Result<Self, usize> {
-        let rows = data.len();
+    pub fn new_from_data(elements: &[Vec<T>]) -> Result<Self, usize> {
+        let rows = elements.len();
 
         if rows == 0 {
             return Ok(Matrix::empty());
         }
 
-        let columns = data[0].len();
+        let columns = elements[0].len();
 
         if columns == 0 {
             return Err(0);
         }
 
-        let mut elements: Vec<T> = Vec::with_capacity(rows * columns);
+        let mut data: Vec<T> = Vec::with_capacity(rows * columns);
 
         for row in 0..rows {
-            if data[row].len() != columns {
+            if elements[row].len() != columns {
                 return Err(row);
             }
 
-            for e in &data[row] {
-                elements.push(*e);
+            for e in &elements[row] {
+                data.push(*e);
             }
         }
 
         Ok(Self {
-            data: elements,
+            data,
             rows,
             columns,
         })
     }
 
+    /// Returns a matrix with values defined by the closure or a SizingError.
+    ///
+    /// # Errors
+    ///
+    /// If one of rows or columns is zero, both must be zero.
     pub fn new_from_closure(
-        f: fn(i: usize, j: usize) -> T,
+        f: impl Fn(usize, usize) -> T,
         rows: usize,
         columns: usize
     ) -> Result<Self, SizingError> {
@@ -145,6 +148,23 @@ impl<T> Matrix<T> where T: Copy {
             .collect();
 
         Ok(Self { data, rows, columns })
+    }
+
+    /// Returns a matrix that has specified value down the leading diagonal and is zero everywhere else or a SizingError.
+    ///
+    /// # Errors
+    ///
+    /// If one of rows or columns is zero, both must be zero.
+    pub fn new_diagonal(value: T, rows: usize, columns: usize) -> Result<Self, SizingError>
+        where T: Zero
+    {
+        Matrix::new_from_closure(
+            |i, j| {
+                if i == j { value } else { T::zero() }
+            },
+            rows,
+            columns
+        )
     }
 }
 
@@ -173,6 +193,27 @@ impl<T> Matrix<T> where T: Copy {
     /// Returns whether the matrix is square in shape.
     pub fn is_square(&self) -> bool {
         self.rows == self.columns && self.rows != 0
+    }
+
+    /// Returns a reference to the indexed element or an IndexError
+    ///
+    /// # Errors
+    ///
+    /// Must index an element that exists.
+    pub fn get(&self, row: usize, column: usize) -> Result<&T, IndexError> {
+        if row >= self.rows && column >= self.columns {
+            return Err(IndexError::Both(row, column));
+        }
+
+        if row >= self.rows {
+            return Err(IndexError::Row(row));
+        }
+
+        if column >= self.columns {
+            return Err(IndexError::Column(column));
+        }
+
+        Ok(&self.data[row * self.columns + column])
     }
 
     /// Returns indexed row as an option to a vec of references.
@@ -225,6 +266,27 @@ impl<T> Matrix<T> where T: Copy {
     /// Returns data as a mutable shared slice.
     pub fn data_mut(&mut self) -> &mut [T] {
         &mut self.data
+    }
+
+    /// Returns a mutable reference to the indexed element or an IndexError
+    ///
+    /// # Errors
+    ///
+    /// Must index an element that exists.
+    pub fn get_mut(&mut self, row: usize, column: usize) -> Result<&mut T, IndexError> {
+        if row >= self.rows && column >= self.columns {
+            return Err(IndexError::Both(row, column));
+        }
+
+        if row >= self.rows {
+            return Err(IndexError::Row(row));
+        }
+
+        if column >= self.columns {
+            return Err(IndexError::Column(column));
+        }
+
+        Ok(&mut self.data[row * self.columns + column])
     }
 
     /// Returns indexed row as an option to a vec of mutable references.
@@ -1418,6 +1480,44 @@ mod tests {
                 );
             }
         }
+
+        mod new_diagonal_matrix {
+            use super::*;
+
+            #[test]
+            fn handles_errors() {
+                assert_eq!(Matrix::new_diagonal(7f32, 0, 5), Err(SizingError::Row(0)));
+                assert_eq!(Matrix::new_diagonal(1250, 4, 0), Err(SizingError::Column(0)));
+            }
+
+            #[test]
+            fn creates_matrix() {
+                assert_eq!(
+                    Matrix::new_diagonal(12.5f32, 2, 2),
+                    Ok(Matrix { data: vec![12.5, 0f32, 0f32, 12.5], rows: 2, columns: 2 })
+                );
+                assert_eq!(
+                    Matrix::new_diagonal(20, 0, 0),
+                    Ok(Matrix { data: vec![], rows: 0, columns: 0 })
+                );
+                assert_eq!(
+                    Matrix::new_diagonal(1, 5, 3),
+                    Ok(Matrix {
+                        data: vec![1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+                        rows: 5,
+                        columns: 3,
+                    })
+                );
+                assert_eq!(
+                    Matrix::new_diagonal(12, 4, 5),
+                    Ok(Matrix {
+                        data: vec![12, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 0, 12, 0],
+                        rows: 4,
+                        columns: 5,
+                    })
+                );
+            }
+        }
     }
 
     mod getters {
@@ -1462,6 +1562,30 @@ mod tests {
             assert!(!m1.is_square());
             assert!(m2.is_square());
             assert!(m3.is_square());
+        }
+
+        mod get {
+            use super::*;
+
+            #[test]
+            fn handles_errors() {
+                let m = Matrix::<i8>::new(5, 3).unwrap();
+
+                assert_eq!(m.get(12, 8), Err(IndexError::Both(12, 8)));
+                assert_eq!(m.get(5, 2), Err(IndexError::Row(5)));
+                assert_eq!(m.get(0, 19), Err(IndexError::Column(19)));
+            }
+
+            #[test]
+            fn gets_element() {
+                let m = Matrix::new_from_closure(|i, j| i * j, 12, 7).unwrap();
+
+                for r in 0..m.rows {
+                    for c in 0..m.columns {
+                        assert_eq!(m.get(r, c), Ok(&m[(r, c)]));
+                    }
+                }
+            }
         }
 
         mod get_row {
@@ -1565,6 +1689,36 @@ mod tests {
             data[1] = 5;
 
             assert_eq!(m.data, vec![1, 5, 0, 1]);
+        }
+
+        mod get_mut {
+            use super::*;
+
+            #[test]
+            fn handles_errors() {
+                let mut m = Matrix::<i8>::new(5, 3).unwrap();
+
+                assert_eq!(m.get_mut(12, 8), Err(IndexError::Both(12, 8)));
+                assert_eq!(m.get_mut(5, 2), Err(IndexError::Row(5)));
+                assert_eq!(m.get_mut(0, 19), Err(IndexError::Column(19)));
+            }
+
+            #[test]
+            fn gets_element() {
+                let mut m = Matrix::new_from_closure(|i, j| i * j, 12, 7).unwrap();
+
+                for r in 0..m.rows {
+                    for c in 0..m.columns {
+                        *m.get_mut(r, c).unwrap() = 13;
+                    }
+                }
+
+                for r in 0..m.rows {
+                    for c in 0..m.columns {
+                        assert_eq!(m[(r, c)], 13);
+                    }
+                }
+            }
         }
 
         mod get_mut_row {
