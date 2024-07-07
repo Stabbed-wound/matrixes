@@ -1,6 +1,7 @@
-#[cfg(test)]
-mod test;
 mod errors;
+
+#[cfg(test)]
+mod tests;
 
 extern crate num;
 
@@ -17,6 +18,7 @@ pub struct Matrix<T> where T: Copy {
 
 // constructors
 impl<T> Matrix<T> where T: Copy {
+    /// Creates a matrix of zero size
     pub fn empty() -> Self {
         return Matrix {
             data: vec![],
