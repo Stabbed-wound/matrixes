@@ -1,13 +1,6 @@
 use super::*;
 
 #[test]
-fn data() {
-    let m = Matrix::<u16>::new(12, 5).unwrap();
-
-    assert_eq!(m.data(), vec![0; 60]);
-}
-
-#[test]
 fn rows() {
     let m = Matrix::<u16>::new(9, 3).unwrap();
 

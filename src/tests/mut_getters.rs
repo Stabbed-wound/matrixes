@@ -1,17 +1,5 @@
 use super::*;
 
-#[test]
-fn data_mut() {
-    let mut m = Matrix::new_identity(2);
-    let data = m.data_mut();
-
-    assert_eq!(data, &mut vec![1, 0, 0, 1]);
-
-    data[1] = 5;
-
-    assert_eq!(m.data, vec![1, 5, 0, 1]);
-}
-
 mod get_mut {
     use super::*;
 

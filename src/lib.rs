@@ -174,11 +174,6 @@ impl<T> Matrix<T> where T: Copy {
 
 // getters
 impl<T> Matrix<T> where T: Copy {
-    /// Returns the data as a shared slice.
-    pub fn data(&self) -> &[T] {
-        &self.data
-    }
-
     /// Returns the number of rows.
     pub fn rows(&self) -> usize {
         self.rows
@@ -267,11 +262,6 @@ impl<T> Matrix<T> where T: Copy {
 
 // mut getters
 impl<T> Matrix<T> where T: Copy {
-    /// Returns data as a mutable shared slice.
-    pub fn data_mut(&mut self) -> &mut [T] {
-        &mut self.data
-    }
-
     /// Returns a mutable reference to the indexed element or an IndexError
     ///
     /// # Errors
