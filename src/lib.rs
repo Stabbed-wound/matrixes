@@ -258,6 +258,24 @@ impl<T> Matrix<T> where T: Copy {
     pub fn get_columns(&self, columns: impl Iterator<Item = usize>) -> Option<Vec<Vec<&T>>> {
         columns.map(|c| self.get_column(c)).collect::<Option<Vec<Vec<&T>>>>()
     }
+
+    /// Returns A Vec of rows of elements selected from the matrix or an IndexError
+    ///
+    /// # Errors
+    ///
+    /// All elements of rows and columns must validly index the matrix.
+    pub fn get_area<I, J>(&self, rows: I, columns: J) -> Result<Vec<Vec<&T>>, IndexError>
+        where
+            I: Iterator<Item = usize> + ToOwned<Owned = I>,
+            J: Iterator<Item = usize> + ToOwned<Owned = J>
+    {
+        rows.map(|row|
+            columns
+                .to_owned()
+                .map(|column| self.get(row, column))
+                .collect::<Result<Vec<&T>, IndexError>>()
+        ).collect::<Result<Vec<Vec<&T>>, IndexError>>()
+    }
 }
 
 // mut getters

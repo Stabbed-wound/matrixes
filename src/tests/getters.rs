@@ -144,3 +144,29 @@ mod get_columns {
         assert_eq!(m.get_columns(2..4).unwrap(), vec![vec![&3, &8, &3], vec![&4, &7, &2]]);
     }
 }
+
+mod get_area {
+    use super::*;
+
+    #[test]
+    fn handles_errors() {
+        let m = Matrix::new_from_closure(|i, j| 10 * i + j, 5, 5).unwrap();
+
+        assert_eq!(
+            m.get_area([0usize, 2, 4, 6].iter().cloned(), 0usize..2),
+            Err(IndexError::Row(6))
+        );
+        assert_eq!(m.get_area(1..4, 3..7), Err(IndexError::Column(5)));
+        assert_eq!(m.get_area(6..8, 10..15), Err(IndexError::Both(6, 10)));
+    }
+
+    #[test]
+    fn gets_area() {
+        let m = Matrix::new_from_closure(|i, j| 10 * i + j, 5, 5).unwrap();
+
+        assert_eq!(
+            m.get_area(1..4, [0, 2, 4].iter().cloned()),
+            Ok(vec![vec![&10, &12, &14], vec![&20, &22, &24], vec![&30, &32, &34]])
+        );
+    }
+}
