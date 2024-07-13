@@ -83,7 +83,7 @@ mod get_rows {
     fn handles_errors() {
         let m = Matrix::<u8>::new_identity(4);
 
-        assert_eq!(m.get_rows(0..8), None);
+        assert_eq!(m.get_rows(0..8), Err(IndexError::Row(4)));
     }
 
     #[test]
@@ -132,7 +132,7 @@ mod get_columns {
             &vec![vec![1, 2, 3, 4, 5], vec![6, 7, 8, 7, 6], vec![5, 4, 3, 2, 1]]
         ).unwrap();
 
-        assert_eq!(m.get_columns(0..9), None);
+        assert_eq!(m.get_columns(6..9), Err(IndexError::Column(6)));
     }
 
     #[test]

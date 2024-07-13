@@ -233,8 +233,8 @@ impl<T> Matrix<T> where T: Copy {
     /// # Error
     ///
     /// All elements of rows must validly index the matrix.
-    pub fn get_rows(&self, rows: impl Iterator<Item = usize>) -> Option<Vec<Vec<&T>>> {
-        rows.map(|r| self.get_row(r)).collect::<Option<Vec<_>>>()
+    pub fn get_rows(&self, rows: impl Iterator<Item = usize>) -> Result<Vec<Vec<&T>>, IndexError> {
+        rows.map(|r| self.get_row(r).ok_or(IndexError::Row(r))).collect::<Result<Vec<_>, _>>()
     }
 
     /// Returns indexed column as an option to a vec of references.
@@ -255,8 +255,13 @@ impl<T> Matrix<T> where T: Copy {
     /// # Error
     ///
     /// All elements of columns must validly index the matrix.
-    pub fn get_columns(&self, columns: impl Iterator<Item = usize>) -> Option<Vec<Vec<&T>>> {
-        columns.map(|c| self.get_column(c)).collect::<Option<Vec<Vec<&T>>>>()
+    pub fn get_columns(
+        &self,
+        columns: impl Iterator<Item = usize>
+    ) -> Result<Vec<Vec<&T>>, IndexError> {
+        columns
+            .map(|c| self.get_column(c).ok_or(IndexError::Column(c)))
+            .collect::<Result<Vec<_>, _>>()
     }
 
     /// Returns A Vec of rows of elements selected from the matrix or an IndexError
