@@ -1,11 +1,11 @@
-mod errors;
+pub mod errors;
 
 #[cfg(test)]
 mod tests;
 
 extern crate num;
 
-pub use errors::{ IndexError, InversionError, MinorError, SizingError };
+use errors::{ IndexError, InversionError, MinorError, SizingError };
 use num::{ One, Zero };
 use std::{ fmt::Debug, ops::{ Add, AddAssign, Div, Index, IndexMut, Mul, Neg, Sub, SubAssign } };
 
@@ -19,6 +19,7 @@ pub struct Matrix<T> where T: Copy {
 // constructors
 impl<T> Matrix<T> where T: Copy {
     /// Creates a matrix of zero size
+    #[inline(always)]
     pub fn empty() -> Self {
         return Matrix {
             data: vec![],
@@ -53,9 +54,7 @@ impl<T> Matrix<T> where T: Copy {
     /// An identity matrix is a square matrix where the elements of the leading diagonal have a value of one and all other elements have a value of zero.
     pub fn new_identity(n: usize) -> Self where T: Zero + One {
         Self {
-            data: (0..n.pow(2))
-                .map(|i| if i % (n + 1) == 0 { T::one() } else { T::zero() })
-                .collect(),
+            data: (0..n * n).map(|i| if i % (n + 1) == 0 { T::one() } else { T::zero() }).collect(),
             rows: n,
             columns: n,
         }
@@ -175,21 +174,25 @@ impl<T> Matrix<T> where T: Copy {
 // getters
 impl<T> Matrix<T> where T: Copy {
     /// Returns the number of rows.
+    #[inline(always)]
     pub fn rows(&self) -> usize {
         self.rows
     }
 
     /// Returns the number of columns.
+    #[inline(always)]
     pub fn columns(&self) -> usize {
         self.columns
     }
 
     /// Returns the number of items in the matrix.
+    #[inline(always)]
     pub fn size(&self) -> usize {
         self.data.len()
     }
 
     /// Returns whether the matrix is square in shape.
+    #[inline(always)]
     pub fn is_square(&self) -> bool {
         self.rows == self.columns && self.rows != 0
     }
@@ -233,6 +236,7 @@ impl<T> Matrix<T> where T: Copy {
     /// # Error
     ///
     /// All elements of rows must validly index the matrix.
+    #[inline(always)]
     pub fn get_rows(&self, rows: impl Iterator<Item = usize>) -> Result<Vec<Vec<&T>>, IndexError> {
         rows.map(|r| self.get_row(r).ok_or(IndexError::Row(r))).collect::<Result<Vec<_>, _>>()
     }
@@ -255,6 +259,7 @@ impl<T> Matrix<T> where T: Copy {
     /// # Error
     ///
     /// All elements of columns must validly index the matrix.
+    #[inline(always)]
     pub fn get_columns(
         &self,
         columns: impl Iterator<Item = usize>
@@ -386,32 +391,26 @@ impl<T> Matrix<T> where T: Copy + 'static {
             return Ok(());
         }
 
-        let first_copy = self
-            .get_row(row1)
-            .ok_or(IndexError::Row(row1))?
-            .iter()
-            .map(|&e| *e)
-            .collect::<Vec<_>>();
-
-        let second_copy = self
-            .get_row(row2)
-            .ok_or(IndexError::Row(row2))?
-            .iter()
-            .map(|&e| *e)
-            .collect::<Vec<_>>();
-
         let cols = self.columns;
+        let first_copy = self.get_row(row1).ok_or(IndexError::Row(row1))?;
 
-        let mut first = self.get_mut_row(row1).unwrap();
+        let mut first = self
+            .get_mut_row(row1)
+            .unwrap()
+            .into_iter()
+            .map(|e| e as *mut T)
+            .collect::<Vec<_>>();
 
-        for i in 0..cols {
-            *first[i] = second_copy[i];
+        for (first, second) in first
+            .iter_mut()
+            .zip(self.get_row(row2).ok_or(IndexError::Row(row1))?) {
+            **first = *second;
         }
 
         let mut second = self.get_mut_row(row2).unwrap();
 
         for i in 0..cols {
-            *second[i] = first_copy[i];
+            *second[i] = *first_copy[i];
         }
 
         Ok(())
@@ -830,12 +829,12 @@ impl<T> Matrix<T> where T: Copy {
             return Err(IndexError::Column(element.1).into());
         }
 
-        let mut copy = self.clone();
+        let mut clone = self.clone();
 
-        copy.remove_row(element.0)?;
-        copy.remove_column(element.1)?;
+        clone.remove_row(element.0)?;
+        clone.remove_column(element.1)?;
 
-        Ok(copy.determinant().unwrap())
+        Ok(clone.determinant().unwrap())
     }
 
     /// Returns an option to a new matrix constructed of the minors of each element of the matrix.

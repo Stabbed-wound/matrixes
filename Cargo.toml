@@ -1,15 +1,22 @@
 [package]
 name = "matrixes"
-description = "Implementation of matrices up to and slightly beyond a highschool level. See README for details."
-version = "2.5.0"
+description = "Implementation of matrices up to and slightly beyond a highschool level."
+version = "2.6.0"
 readme = "README.md"
 repository = "https://github.com/TheKnightGawain/matrixes/"
 license = "MIT"
 keywords = ["matrix", "matrices", "math", "maths", "linear-algebra"]
 categories = ["data-structures", "mathematics"]
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+autobenches = false
 
 [dependencies]
 num = "0.4.0"
 thiserror = "1.0.50"
+
+[[bench]]
+name="bench"
+harness=false
+
+[dev-dependencies]
+divan = "0.1.14"
+rand = "0.8.5"
