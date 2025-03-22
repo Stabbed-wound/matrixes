@@ -25,7 +25,10 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
         Self([[elem; C]; R])
     }
 
-    pub fn new_from_function<F: FnMut(usize, usize) -> T>(mut f: F) -> Self {
+    pub fn new_from_function<F>(mut f: F) -> Self
+    where
+        F: FnMut(usize, usize) -> T,
+    {
         Self(array::from_fn(|row| array::from_fn(|col| f(row, col))))
     }
 
@@ -61,19 +64,25 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
         None
     }
 
-    pub fn get_rows<I: IntoIterator<Item = usize>>(&self, rows: I) -> Option<Vec<[&T; C]>> {
+    pub fn get_rows<I>(&self, rows: I) -> Option<Vec<[&T; C]>>
+    where
+        I: IntoIterator<Item = usize>,
+    {
         rows.into_iter().map(|row| self.get_row(row)).collect()
     }
 
-    pub fn get_cols<I: IntoIterator<Item = usize>>(&self, cols: I) -> Option<Vec<[&T; R]>> {
+    pub fn get_cols<I>(&self, cols: I) -> Option<Vec<[&T; R]>>
+    where
+        I: IntoIterator<Item = usize>,
+    {
         cols.into_iter().map(|col| self.get_col(col)).collect()
     }
 
-    pub fn get_area<I1: IntoIterator<Item = usize>, I2: IntoIterator<Item = usize>>(
-        &self,
-        rows: I1,
-        cols: I2,
-    ) -> Option<Vec<Vec<&T>>> {
+    pub fn get_area<I1, I2>(&self, rows: I1, cols: I2) -> Option<Vec<Vec<&T>>>
+    where
+        I1: IntoIterator<Item = usize>,
+        I2: IntoIterator<Item = usize>,
+    {
         let mut cols = cols.into_iter();
 
         rows.into_iter()
@@ -129,10 +138,10 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
 
     /// # Safety
     /// rows must have no duplicates
-    pub unsafe fn get_mut_rows<I: IntoIterator<Item = usize>>(
-        &mut self,
-        rows: I,
-    ) -> Option<Vec<[&mut T; C]>> {
+    pub unsafe fn get_mut_rows<I>(&mut self, rows: I) -> Option<Vec<[&mut T; C]>>
+    where
+        I: IntoIterator<Item = usize>,
+    {
         let self_ptr = self as *mut Self;
 
         rows.into_iter()
@@ -142,10 +151,10 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
 
     /// # Safety
     /// cols must have no duplicates
-    pub unsafe fn get_mut_cols<I: IntoIterator<Item = usize>>(
-        &mut self,
-        cols: I,
-    ) -> Option<Vec<[&mut T; R]>> {
+    pub unsafe fn get_mut_cols<I>(&mut self, cols: I) -> Option<Vec<[&mut T; R]>>
+    where
+        I: IntoIterator<Item = usize>,
+    {
         let self_ptr = self as *mut Self;
 
         cols.into_iter()
@@ -156,11 +165,11 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
     /// # Safety
     /// - rows must have no duplicates
     /// - cols must have no duplicates
-    pub unsafe fn get_mut_area<I1: IntoIterator<Item = usize>, I2: IntoIterator<Item = usize>>(
-        &mut self,
-        rows: I1,
-        cols: I2,
-    ) -> Option<Vec<Vec<&mut T>>> {
+    pub unsafe fn get_mut_area<I1, I2>(&mut self, rows: I1, cols: I2) -> Option<Vec<Vec<&mut T>>>
+    where
+        I1: IntoIterator<Item = usize>,
+        I2: IntoIterator<Item = usize>,
+    {
         let mut cols = cols.into_iter();
 
         rows.into_iter()
@@ -224,13 +233,19 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
 // transformers
 
 impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
-    pub fn map<U, F: FnMut(&T) -> U>(&self, mut f: F) -> Matrix<U, R, C> {
+    pub fn map<U, F>(&self, mut f: F) -> Matrix<U, R, C>
+    where
+        F: FnMut(&T) -> U,
+    {
         Matrix(array::from_fn(|row| {
             array::from_fn(|col| f(&self[(row, col)]))
         }))
     }
 
-    pub fn for_each<F: FnMut(&mut T)>(&mut self, mut f: F) {
+    pub fn for_each<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&mut T),
+    {
         self.0.iter_mut().for_each(|row| {
             row.iter_mut().for_each(&mut f);
         });
@@ -257,7 +272,10 @@ impl<T, const R: usize, const C: usize> IndexMut<(usize, usize)> for Matrix<T, R
     }
 }
 
-impl<T: Neg + Copy, const R: usize, const C: usize> Neg for Matrix<T, R, C> {
+impl<T, const R: usize, const C: usize> Neg for Matrix<T, R, C>
+where
+    T: Neg + Copy,
+{
     type Output = Matrix<<T as Neg>::Output, R, C>;
 
     fn neg(self) -> Self::Output {
@@ -265,7 +283,10 @@ impl<T: Neg + Copy, const R: usize, const C: usize> Neg for Matrix<T, R, C> {
     }
 }
 
-impl<T: Neg + Copy, const R: usize, const C: usize> Neg for &Matrix<T, R, C> {
+impl<T, const R: usize, const C: usize> Neg for &Matrix<T, R, C>
+where
+    T: Neg + Copy,
+{
     type Output = Matrix<<T as Neg>::Output, R, C>;
 
     fn neg(self) -> Self::Output {
