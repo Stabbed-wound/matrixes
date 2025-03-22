@@ -22,3 +22,4 @@ unwrap_used = "deny"
 cargo_common_metadata = "deny"
 
 [dependencies]
+num-traits = "0.2.19"
