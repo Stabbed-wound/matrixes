@@ -25,7 +25,7 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
         Self([[elem; C]; R])
     }
 
-    pub fn new_from_function<F: Fn(usize, usize) -> T>(f: F) -> Self {
+    pub fn new_from_function<F: FnMut(usize, usize) -> T>(mut f: F) -> Self {
         Self(array::from_fn(|row| array::from_fn(|col| f(row, col))))
     }
 
@@ -224,15 +224,15 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
 // transformers
 
 impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
-    pub fn map<U, F: Fn(&T) -> U>(&self, f: F) -> Matrix<U, R, C> {
+    pub fn map<U, F: FnMut(&T) -> U>(&self, mut f: F) -> Matrix<U, R, C> {
         Matrix(array::from_fn(|row| {
             array::from_fn(|col| f(&self[(row, col)]))
         }))
     }
 
-    pub fn for_each<F: Fn(&mut T)>(&mut self, f: F) {
+    pub fn for_each<F: FnMut(&mut T)>(&mut self, mut f: F) {
         self.0.iter_mut().for_each(|row| {
-            row.iter_mut().for_each(&f);
+            row.iter_mut().for_each(&mut f);
         });
     }
 }
