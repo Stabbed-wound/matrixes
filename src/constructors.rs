@@ -26,8 +26,4 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
     {
         Self(array::from_fn(|row| array::from_fn(|col| f(row, col))))
     }
-
-    pub const fn new_from_arrays(data: [[T; C]; R]) -> Self {
-        Self(data)
-    }
 }
