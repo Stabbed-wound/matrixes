@@ -221,6 +221,22 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
     }
 }
 
+// transformers
+
+impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
+    pub fn map<U, F: Fn(&T) -> U>(&self, f: F) -> Matrix<U, R, C> {
+        Matrix(array::from_fn(|row| {
+            array::from_fn(|col| f(&self[(row, col)]))
+        }))
+    }
+
+    pub fn for_each<F: Fn(&mut T)>(&mut self, f: F) {
+        self.0.iter_mut().for_each(|row| {
+            row.iter_mut().for_each(&f);
+        });
+    }
+}
+
 impl<T: Default, const R: usize, const C: usize> Default for Matrix<T, R, C> {
     fn default() -> Self {
         Self(array::from_fn(|_| array::from_fn(|_| T::default())))
