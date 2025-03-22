@@ -1,0 +1,24 @@
+[package]
+name = "matrixes"
+version = "3.0.0"
+publish = false
+description = "A Matrix library I made to learn"
+categories = ["mathematics", "data-structures"]
+keywords = ["matrix", "matrices"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/Stabbed-wound/matrixes"
+edition = "2024"
+
+[lints.rust]
+unsafe_op_in_unsafe_fn = "deny"
+
+[lints.clippy]
+complexity = "deny"
+nursery = "deny"
+pedantic = "deny"
+style = "deny"
+unwrap_used = "deny"
+cargo_common_metadata = "deny"
+
+[dependencies]
