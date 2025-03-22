@@ -1,5 +1,5 @@
 use num_traits::{One, Zero};
-use std::ops::{Index, IndexMut};
+use std::ops::{Index, IndexMut, Neg};
 use std::{array, mem};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -254,5 +254,21 @@ impl<T, const R: usize, const C: usize> Index<(usize, usize)> for Matrix<T, R, C
 impl<T, const R: usize, const C: usize> IndexMut<(usize, usize)> for Matrix<T, R, C> {
     fn index_mut(&mut self, (row, col): (usize, usize)) -> &mut Self::Output {
         &mut self.0[row][col]
+    }
+}
+
+impl<T: Neg + Copy, const R: usize, const C: usize> Neg for Matrix<T, R, C> {
+    type Output = Matrix<<T as Neg>::Output, R, C>;
+
+    fn neg(self) -> Self::Output {
+        self.map(|&elem| elem.neg())
+    }
+}
+
+impl<T: Neg + Copy, const R: usize, const C: usize> Neg for &Matrix<T, R, C> {
+    type Output = Matrix<<T as Neg>::Output, R, C>;
+
+    fn neg(self) -> Self::Output {
+        self.map(|&elem| elem.neg())
     }
 }
