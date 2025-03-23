@@ -1,6 +1,5 @@
+mod accessors;
 mod constructors;
-mod getters;
-mod mut_getters;
 mod swappers;
 mod transformers;
 mod traits;
