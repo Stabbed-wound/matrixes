@@ -1,46 +1,69 @@
 use crate::Matrix;
+use crate::errors::IndexError;
 use std::array;
 
 impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
-    pub const fn get(&self, row: usize, col: usize) -> Option<&T> {
-        if row < R && col < C {
-            return Some(&self.0[row][col]);
+    /// # Errors
+    /// - row must index within bounds
+    /// - col must index within bounds
+    pub const fn get(&self, row: usize, col: usize) -> Result<&T, IndexError> {
+        if row >= R && col >= C {
+            return Err(IndexError::Both(row, col));
         }
 
-        None
-    }
-
-    pub fn get_row(&self, row: usize) -> Option<[&T; C]> {
-        if row < R {
-            return Some(array::from_fn(|col| &self.0[row][col]));
+        if row >= R {
+            return Err(IndexError::Row(row));
         }
 
-        None
-    }
-
-    pub fn get_col(&self, col: usize) -> Option<[&T; R]> {
-        if col < C {
-            return Some(array::from_fn(|row| &self.0[row][col]));
+        if col >= C {
+            return Err(IndexError::Column(col));
         }
 
-        None
+        Ok(&self.0[row][col])
     }
 
-    pub fn get_rows<I>(&self, rows: I) -> Option<Vec<[&T; C]>>
+    /// # Errors
+    /// row must index within bounds
+    pub fn get_row(&self, row: usize) -> Result<[&T; C], IndexError> {
+        if row >= R {
+            return Err(IndexError::Row(row));
+        }
+
+        Ok(array::from_fn(|col| &self.0[row][col]))
+    }
+
+    /// # Errors
+    /// col must index within bounds
+    pub fn get_col(&self, col: usize) -> Result<[&T; R], IndexError> {
+        if col >= C {
+            return Err(IndexError::Column(col));
+        }
+
+        Ok(array::from_fn(|row| &self.0[row][col]))
+    }
+
+    /// # Errors
+    /// All elements of rows must index within bounds
+    pub fn get_rows<I>(&self, rows: I) -> Result<Vec<[&T; C]>, IndexError>
     where
         I: IntoIterator<Item = usize>,
     {
         rows.into_iter().map(|row| self.get_row(row)).collect()
     }
 
-    pub fn get_cols<I>(&self, cols: I) -> Option<Vec<[&T; R]>>
+    /// # Errors
+    /// All elements of cols must index within bounds
+    pub fn get_cols<I>(&self, cols: I) -> Result<Vec<[&T; R]>, IndexError>
     where
         I: IntoIterator<Item = usize>,
     {
         cols.into_iter().map(|col| self.get_col(col)).collect()
     }
 
-    pub fn get_area<I1, I2>(&self, rows: I1, cols: I2) -> Option<Vec<Vec<&T>>>
+    /// # Errors
+    /// - All elements of rows must index within bounds
+    /// - All elements of cols must index within bounds
+    pub fn get_area<I1, I2>(&self, rows: I1, cols: I2) -> Result<Vec<Vec<&T>>, IndexError>
     where
         I1: IntoIterator<Item = usize>,
         I2: IntoIterator<Item = usize>,
@@ -48,57 +71,74 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
         let mut cols = cols.into_iter();
 
         rows.into_iter()
-            .map(|row| -> Option<Vec<&T>> {
-                let row = self.0.get(row)?;
+            .map(|row| {
+                let row = self.0.get(row).ok_or(IndexError::Row(row))?;
 
                 cols.by_ref()
-                    .map(|col| row.get(col))
-                    .collect::<Option<Vec<&T>>>()
+                    .map(|col| row.get(col).ok_or(IndexError::Column(col)))
+                    .collect::<Result<Vec<&T>, IndexError>>()
             })
-            .collect::<Option<Vec<_>>>()
+            .collect::<Result<Vec<_>, IndexError>>()
     }
 }
 
 impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
-    pub fn get_mut(&mut self, row: usize, col: usize) -> Option<&mut T> {
-        if row < R && col < C {
-            return Some(&mut self.0[row][col]);
+    /// # Errors
+    /// - row must index within bounds
+    /// - col must index within bounds
+    pub fn get_mut(&mut self, row: usize, col: usize) -> Result<&mut T, IndexError> {
+        if row >= R && col >= C {
+            return Err(IndexError::Both(row, col));
         }
 
-        None
+        if row >= R {
+            return Err(IndexError::Row(row));
+        }
+
+        if col >= C {
+            return Err(IndexError::Column(col));
+        }
+
+        Ok(&mut self.0[row][col])
     }
 
-    pub fn get_mut_row(&mut self, row: usize) -> Option<[&mut T; C]> {
+    /// # Errors
+    /// row must index within bounds
+    pub fn get_mut_row(&mut self, row: usize) -> Result<[&mut T; C], IndexError> {
         let self_ptr = self as *mut Self;
 
-        if row < R {
-            return Some(array::from_fn(|col| {
-                // Safety
-                // Will always index different values and thus not make mutable aliases
-                &mut unsafe { &mut *self_ptr }.0[row][col]
-            }));
+        if row >= R {
+            return Err(IndexError::Row(row));
         }
 
-        None
+        Ok(array::from_fn(|col| {
+            // Safety
+            // Will always index different values and thus not make mutable aliases
+            &mut unsafe { &mut *self_ptr }.0[row][col]
+        }))
     }
 
-    pub fn get_mut_col(&mut self, col: usize) -> Option<[&mut T; R]> {
+    /// # Errors
+    /// col must index within bounds
+    pub fn get_mut_col(&mut self, col: usize) -> Result<[&mut T; R], IndexError> {
         let self_ptr = self as *mut Self;
 
-        if col < C {
-            return Some(array::from_fn(|row| {
-                // Safety
-                // Will always index different values and thus not make mutable aliases
-                &mut unsafe { &mut *self_ptr }.0[row][col]
-            }));
+        if col >= C {
+            return Err(IndexError::Column(col))
         }
 
-        None
+        Ok(array::from_fn(|row| {
+            // Safety
+            // Will always index different values and thus not make mutable aliases
+            &mut unsafe { &mut *self_ptr }.0[row][col]
+        }))
     }
 
+    /// # Errors
+    /// all elements of rows must index within bounds
     /// # Safety
     /// rows must have no duplicates
-    pub unsafe fn get_mut_rows<I>(&mut self, rows: I) -> Option<Vec<[&mut T; C]>>
+    pub unsafe fn get_mut_rows<I>(&mut self, rows: I) -> Result<Vec<[&mut T; C]>, IndexError>
     where
         I: IntoIterator<Item = usize>,
     {
@@ -109,9 +149,11 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
             .collect()
     }
 
+    /// # Errors
+    /// all elements of cols must index within bounds
     /// # Safety
     /// cols must have no duplicates
-    pub unsafe fn get_mut_cols<I>(&mut self, cols: I) -> Option<Vec<[&mut T; R]>>
+    pub unsafe fn get_mut_cols<I>(&mut self, cols: I) -> Result<Vec<[&mut T; R]>, IndexError>
     where
         I: IntoIterator<Item = usize>,
     {
@@ -122,10 +164,13 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
             .collect()
     }
 
+    /// # Errors
+    /// - all elements of rows must index within bounds
+    /// - all elements of cols must index within bounds
     /// # Safety
     /// - rows must have no duplicates
     /// - cols must have no duplicates
-    pub unsafe fn get_mut_area<I1, I2>(&mut self, rows: I1, cols: I2) -> Option<Vec<Vec<&mut T>>>
+    pub unsafe fn get_mut_area<I1, I2>(&mut self, rows: I1, cols: I2) -> Result<Vec<Vec<&mut T>>, IndexError>
     where
         I1: IntoIterator<Item = usize>,
         I2: IntoIterator<Item = usize>,
@@ -133,13 +178,13 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
         let mut cols = cols.into_iter();
 
         rows.into_iter()
-            .map(|row| -> Option<Vec<&mut T>> {
-                let row_ptr = self.0.get_mut(row)? as *mut [T; C];
+            .map(|row| {
+                let row_ptr = self.0.get_mut(row).ok_or(IndexError::Row(row))? as *mut [T; C];
 
                 cols.by_ref()
-                    .map(|col| unsafe { &mut *row_ptr }.get_mut(col))
-                    .collect::<Option<Vec<&mut T>>>()
+                    .map(|col| unsafe { &mut *row_ptr }.get_mut(col).ok_or(IndexError::Column(col)))
+                    .collect::<Result<Vec<&mut T>, IndexError>>()
             })
-            .collect::<Option<Vec<Vec<&mut T>>>>()
+            .collect::<Result<Vec<_>, IndexError>>()
     }
 }

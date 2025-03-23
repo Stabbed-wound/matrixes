@@ -11,8 +11,7 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
     }
 }
 
-impl<T, const R: usize, const C: usize> IntoIterator for Matrix<T, R, C>
-{
+impl<T, const R: usize, const C: usize> IntoIterator for Matrix<T, R, C> {
     type Item = T;
     type IntoIter = vec::IntoIter<T>;
 
@@ -24,7 +23,7 @@ impl<T, const R: usize, const C: usize> IntoIterator for Matrix<T, R, C>
         // dst is valid and aligned
         unsafe { data_ptr.write(flattened) }
         mem::forget(self.0);
-        
+
         data.into_iter()
     }
 }
