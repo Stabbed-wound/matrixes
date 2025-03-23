@@ -11,7 +11,7 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
             array::from_fn(|col| f(&self[(row, col)]))
         }))
     }
-    
+
     /// # Errors
     /// - row1 must index within bounds
     /// - row2 must index within bounds
