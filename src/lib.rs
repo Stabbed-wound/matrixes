@@ -3,7 +3,7 @@ mod constructors;
 mod transformers;
 mod traits;
 mod iter;
-mod errors;
+pub mod errors;
 mod maths;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
