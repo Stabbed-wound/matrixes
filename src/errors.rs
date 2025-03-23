@@ -9,3 +9,9 @@ pub enum IndexError {
     #[error("Invalid row index: {0} and column index: {1}")]
     Both(usize, usize),
 }
+
+#[derive(Debug, Error)]
+pub enum SquareError {
+    #[error("Matrix is not square")]
+    NotSquare,
+}
