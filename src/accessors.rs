@@ -1,8 +1,16 @@
-use crate::Matrix;
 use crate::errors::IndexError;
+use crate::Matrix;
 use std::array;
 
 impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
+    pub const fn is_square(&self) -> bool {
+        R == C
+    }
+
+    pub const fn size(&self) -> usize {
+        R * C
+    }
+
     /// # Errors
     /// - row must index within bounds
     /// - col must index within bounds
@@ -124,7 +132,7 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
         let self_ptr = self as *mut Self;
 
         if col >= C {
-            return Err(IndexError::Column(col))
+            return Err(IndexError::Column(col));
         }
 
         Ok(array::from_fn(|row| {
@@ -170,7 +178,11 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
     /// # Safety
     /// - rows must have no duplicates
     /// - cols must have no duplicates
-    pub unsafe fn get_mut_area<I1, I2>(&mut self, rows: I1, cols: I2) -> Result<Vec<Vec<&mut T>>, IndexError>
+    pub unsafe fn get_mut_area<I1, I2>(
+        &mut self,
+        rows: I1,
+        cols: I2,
+    ) -> Result<Vec<Vec<&mut T>>, IndexError>
     where
         I1: IntoIterator<Item = usize>,
         I2: IntoIterator<Item = usize>,
@@ -182,7 +194,11 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
                 let row_ptr = self.0.get_mut(row).ok_or(IndexError::Row(row))? as *mut [T; C];
 
                 cols.by_ref()
-                    .map(|col| unsafe { &mut *row_ptr }.get_mut(col).ok_or(IndexError::Column(col)))
+                    .map(|col| {
+                        unsafe { &mut *row_ptr }
+                            .get_mut(col)
+                            .ok_or(IndexError::Column(col))
+                    })
                     .collect::<Result<Vec<&mut T>, IndexError>>()
             })
             .collect::<Result<Vec<_>, IndexError>>()
