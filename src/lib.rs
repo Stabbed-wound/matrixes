@@ -1,6 +1,5 @@
 mod accessors;
 mod constructors;
-mod swappers;
 mod transformers;
 mod traits;
 mod iter;
