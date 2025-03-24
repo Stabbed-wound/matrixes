@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-#[derive(Copy, Clone, Debug, Error)]
+#[derive(Copy, Clone, Debug, Error, Eq, PartialEq)]
 pub enum IndexError {
     #[error("Invalid row index: {0}")]
     Row(usize),
@@ -10,7 +10,7 @@ pub enum IndexError {
     Both(usize, usize),
 }
 
-#[derive(Debug, Error)]
+#[derive(Copy, Clone, Debug, Error, Eq, PartialEq)]
 pub enum SquareError {
     #[error("Matrix is not square")]
     NotSquare,
