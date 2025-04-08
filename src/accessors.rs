@@ -154,7 +154,11 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
         let self_ptr = self as *mut Self;
 
         rows.into_iter()
-            .map(|row| unsafe { &mut *self_ptr }.get_mut_row(row))
+            .map(|row| {
+                // Safety
+                // Enforced by caller
+                unsafe { &mut *self_ptr }.get_mut_row(row)
+            })
             .collect()
     }
 
@@ -169,7 +173,11 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
         let self_ptr = self as *mut Self;
 
         cols.into_iter()
-            .map(|col| unsafe { &mut *self_ptr }.get_mut_col(col))
+            .map(|col| {
+                // Safety
+                // Enforced by caller
+                unsafe { &mut *self_ptr }.get_mut_col(col)
+            })
             .collect()
     }
 
@@ -197,6 +205,8 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
 
                 cols.clone()
                     .map(|col| {
+                        // Safety
+                        // Enforced by caller
                         unsafe { &mut *row_ptr }
                             .get_mut(col)
                             .ok_or(IndexError::Column(col))
