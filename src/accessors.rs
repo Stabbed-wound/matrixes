@@ -81,11 +81,9 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
 
         rows.into_iter()
             .map(|row| {
-                let row = self.0.get(row).ok_or(IndexError::Row(row))?;
-
                 cols.clone()
-                    .map(|col| row.get(col).ok_or(IndexError::Column(col)))
-                    .collect::<Result<Vec<&T>, IndexError>>()
+                    .map(|col| self.get(row, col))
+                    .collect::<Result<Vec<_>, IndexError>>()
             })
             .collect::<Result<Vec<_>, IndexError>>()
     }
@@ -197,21 +195,18 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
         I2: IntoIterator<Item = usize>,
         I2::IntoIter: Clone,
     {
+        let self_ptr = self as *mut Self;
         let cols = cols.into_iter();
 
         rows.into_iter()
             .map(|row| {
-                let row_ptr = self.0.get_mut(row).ok_or(IndexError::Row(row))? as *mut [T; C];
-
                 cols.clone()
                     .map(|col| {
                         // Safety
                         // Enforced by caller
-                        unsafe { &mut *row_ptr }
-                            .get_mut(col)
-                            .ok_or(IndexError::Column(col))
+                        unsafe { &mut *self_ptr }.get_mut(row, col)
                     })
-                    .collect::<Result<Vec<&mut T>, IndexError>>()
+                    .collect::<Result<Vec<_>, IndexError>>()
             })
             .collect::<Result<Vec<_>, IndexError>>()
     }
