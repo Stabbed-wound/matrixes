@@ -1,6 +1,7 @@
 use crate::errors::IndexError;
 use crate::Matrix;
 use std::array;
+use std::ops::{Index, IndexMut};
 
 impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
     pub const fn is_square(&self) -> bool {
@@ -209,5 +210,19 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
                     .collect::<Result<Vec<_>, IndexError>>()
             })
             .collect::<Result<Vec<_>, IndexError>>()
+    }
+}
+
+impl<T, const R: usize, const C: usize> Index<(usize, usize)> for Matrix<T, R, C> {
+    type Output = T;
+
+    fn index(&self, (row, col): (usize, usize)) -> &Self::Output {
+        &self.0[row][col]
+    }
+}
+
+impl<T, const R: usize, const C: usize> IndexMut<(usize, usize)> for Matrix<T, R, C> {
+    fn index_mut(&mut self, (row, col): (usize, usize)) -> &mut Self::Output {
+        &mut self.0[row][col]
     }
 }
