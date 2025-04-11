@@ -24,3 +24,7 @@ cargo_common_metadata = "deny"
 [dependencies]
 num-traits = "0.2.19"
 thiserror = "2.0.12"
+
+[dev-dependencies]
+rstest = "0.25.0"
+rstest_reuse = "0.7.0"
