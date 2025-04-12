@@ -94,7 +94,7 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
     /// # Errors
     /// - row must index within bounds
     /// - col must index within bounds
-    pub fn get_mut(&mut self, row: usize, col: usize) -> Result<&mut T, IndexError> {
+    pub const fn get_mut(&mut self, row: usize, col: usize) -> Result<&mut T, IndexError> {
         if row >= R && col >= C {
             return Err(IndexError::Both(row, col));
         }
