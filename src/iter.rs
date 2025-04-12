@@ -1,5 +1,6 @@
 use crate::Matrix;
-use std::{mem, slice, vec};
+use std::mem::ManuallyDrop;
+use std::{slice, vec};
 
 impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
     pub fn iter(&self) -> <&Self as IntoIterator>::IntoIter {
@@ -16,13 +17,13 @@ impl<T, const R: usize, const C: usize> IntoIterator for Matrix<T, R, C> {
     type IntoIter = vec::IntoIter<T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        let flattened = self.0.as_flattened();
+        let this = ManuallyDrop::new(self);
+        let flattened = this.0.as_flattened();
         let data = Vec::with_capacity(flattened.len());
         let data_ptr = &mut data.as_slice() as *mut &[T];
         // Safety
-        // dst is valid and aligned
+        // data_ptr is valid and aligned
         unsafe { data_ptr.write(flattened) }
-        mem::forget(self.0);
 
         data.into_iter()
     }
