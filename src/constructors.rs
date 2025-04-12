@@ -3,6 +3,14 @@ use num_traits::{One, Zero};
 use std::array;
 
 impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
+    #[must_use]
+    pub fn new() -> Self
+    where
+        T: Default,
+    {
+        Self::default()
+    }
+
     pub const fn of_elem(elem: T) -> Self
     where
         T: Copy,
