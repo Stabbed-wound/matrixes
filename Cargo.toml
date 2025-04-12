@@ -24,6 +24,7 @@ cargo_common_metadata = "deny"
 [dependencies]
 num-traits = "0.2.19"
 thiserror = "2.0.12"
+serde = {version = "1.0.219", optional = true}
 
 [dev-dependencies]
 rstest = "0.25.0"
