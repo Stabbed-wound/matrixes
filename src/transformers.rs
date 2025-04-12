@@ -2,13 +2,11 @@ use crate::{errors::IndexError, Matrix};
 use std::{array, mem};
 
 impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
-    pub fn map<U, F>(&self, mut f: F) -> Matrix<U, R, C>
+    pub fn map<F, U>(self, mut f: F) -> Matrix<U, R, C>
     where
-        F: FnMut(&T) -> U,
+        F: FnMut(T) -> U,
     {
-        Matrix(array::from_fn(|row| {
-            array::from_fn(|col| f(&self[(row, col)]))
-        }))
+        Matrix(self.0.map(|row| row.map(&mut f)))
     }
 
     /// # Errors

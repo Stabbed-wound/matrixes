@@ -24,7 +24,7 @@ where
     type Output = Matrix<<T as Neg>::Output, R, C>;
 
     fn neg(self) -> Self::Output {
-        self.map(|&elem| elem.neg())
+        self.map(T::neg)
     }
 }
 
@@ -35,6 +35,6 @@ where
     type Output = Matrix<<T as Neg>::Output, R, C>;
 
     fn neg(self) -> Self::Output {
-        self.map(|&elem| elem.neg())
+        (*self).map(T::neg)
     }
 }
