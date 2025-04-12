@@ -11,22 +11,26 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
             array::from_fn(|col| f(&self[(row, col)]))
         }))
     }
-    
+
     /// # Errors
     /// - index1 must index within bounds
     /// - index2 must index within bounds
-    pub fn swap_elems(&mut self, index1: (usize, usize), index2: (usize, usize)) -> Result<(), IndexError> {
+    pub fn swap_elems(
+        &mut self,
+        index1: (usize, usize),
+        index2: (usize, usize),
+    ) -> Result<(), IndexError> {
         if index1 == index2 {
-            return Ok(())
+            return Ok(());
         }
-        
+
         let self_ptr = self as *mut Self;
-        
+
         let elem1 = unsafe { &mut *self_ptr }.get_mut(index1.0, index1.1)?;
         let elem2 = unsafe { &mut *self_ptr }.get_mut(index2.0, index2.1)?;
-        
+
         mem::swap(elem1, elem2);
-        
+
         Ok(())
     }
 
