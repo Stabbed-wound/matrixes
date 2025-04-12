@@ -1,5 +1,4 @@
-use crate::errors::{IndexError, SquareError};
-use crate::Matrix;
+use crate::{errors::IndexError, Matrix};
 use std::{array, mem};
 
 impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
@@ -87,27 +86,23 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
             array::from_fn(|col| self[(col, row)].clone())
         }))
     }
+}
 
-    /// # Errors
-    /// self must be a square matrix
-    pub fn as_transpose(&mut self) -> Result<(), SquareError> {
-        if !self.is_square() {
-            return Err(SquareError::NotSquare);
-        }
-
+impl<T, const N: usize> Matrix<T, N, N> {
+    pub fn transpose_in_place(&mut self) {
         let data_ptr = &raw mut self.0;
 
-        for row in 0..R - 1 {
-            for col in row + 1..C {
+        for row in 0..N - 1 {
+            for col in row + 1..N {
                 // Safety
                 // row and col are never equal so this is fine
-                mem::swap(
-                    &mut unsafe { &mut *data_ptr }[row][col],
-                    &mut unsafe { &mut *data_ptr }[col][row],
-                );
+                unsafe {
+                    mem::swap(
+                        &mut (&mut *data_ptr)[row][col],
+                        &mut (&mut *data_ptr)[col][row],
+                    );
+                }
             }
         }
-
-        Ok(())
     }
 }
