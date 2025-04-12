@@ -35,3 +35,28 @@ impl<T, const N: usize> Matrix<T, N, N> {
         Self::from_fn(|row, col| if row == col { T::one() } else { T::zero() })
     }
 }
+
+impl<T, const R: usize, const C: usize> From<[[T; C]; R]> for Matrix<T, R, C> {
+    fn from(value: [[T; C]; R]) -> Self {
+        Self(value)
+    }
+}
+
+macro_rules! try_from_try_into_array {
+    ($f:ty) => {
+        impl<'a, T, const R: usize, const C: usize> TryFrom<$f> for Matrix<T, R, C>
+        where
+            [[T; C]; R]: TryFrom<$f>,
+        {
+            type Error = <[[T; C]; R] as TryFrom<$f>>::Error;
+        
+            fn try_from(value: $f) -> Result<Self, Self::Error> {
+                Ok(Self(<[[T; C]; R]>::try_from(value)?))
+            }
+        }
+    };
+}
+
+try_from_try_into_array!(&'a [[T; C]]);
+try_from_try_into_array!(&'a mut [[T; C]]);
+try_from_try_into_array!(Vec<[T; C]>);

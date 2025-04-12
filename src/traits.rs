@@ -11,12 +11,6 @@ where
     }
 }
 
-impl<T, const R: usize, const C: usize> From<[[T; C]; R]> for Matrix<T, R, C> {
-    fn from(value: [[T; C]; R]) -> Self {
-        Self(value)
-    }
-}
-
 impl<T, const R: usize, const C: usize> Neg for Matrix<T, R, C>
 where
     T: Neg + Copy,
