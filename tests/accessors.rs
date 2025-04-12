@@ -11,7 +11,7 @@ mod fixtures {
 
     #[fixture]
     pub fn small_identity() -> Matrix<i32, 3, 3> {
-        Matrix::new_identity()
+        Matrix::identity()
     }
 
     #[fixture]
