@@ -3,6 +3,51 @@ use crate::Matrix;
 use std::ops::{AddAssign, Mul, MulAssign};
 
 impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
+    ///
+    ///
+    /// # Arguments
+    ///
+    /// * `source`:
+    /// * `target`:
+    ///
+    /// returns: Result<(), `IndexError`>
+    ///
+    /// # Errors
+    /// source and target must index within bounds
+    ///
+    /// # Examples
+    ///
+    /// ```
+    ///
+    /// ```
+    pub fn add_rows(&mut self, source: usize, target: usize) -> Result<(), IndexError>
+    where
+        T: AddAssign + Copy,
+    {
+        let source_row = self.get_row(source)?.map(|elem| *elem);
+
+        for (target, source) in self.get_mut_row(target)?.into_iter().zip(source_row) {
+            *target += source;
+        }
+
+        Ok(())
+    }
+
+    /// # Errors
+    /// source and target must index within bounds
+    pub fn add_cols(&mut self, source: usize, target: usize) -> Result<(), IndexError>
+    where
+        T: AddAssign + Copy,
+    {
+        let source_col = self.get_col(source)?.map(|elem| *elem);
+
+        for (target, source) in self.get_mut_col(target)?.into_iter().zip(source_col) {
+            *target += source;
+        }
+
+        Ok(())
+    }
+
     /// # Errors
     /// row must index within bounds
     pub fn scale_row(&mut self, row: usize, factor: T) -> Result<(), IndexError>
