@@ -118,6 +118,12 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
 
         Ok(())
     }
+
+    pub fn scale(&mut self, factor: T) where T: MulAssign + Copy {
+        for elem in self {
+            *elem *= factor;
+        }
+    }
 }
 
 impl<T, const R: usize, const C: usize> Add for Matrix<T, R, C>
