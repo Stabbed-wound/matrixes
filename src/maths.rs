@@ -1,5 +1,5 @@
 use crate::{errors::IndexError, Matrix};
-use num_traits::{ConstOne, ConstZero, One, Zero};
+use num_traits::{ConstZero, One, Zero};
 use std::ops::{Sub, SubAssign};
 use std::{
     iter::zip,
@@ -385,13 +385,6 @@ where
     T: Mul<Output = T> + Copy + Zero + One,
 {
     fn one() -> Self {
-        Self([[T::one(); N]; N])
+        Self::identity()
     }
-}
-
-impl<T, const N: usize> ConstOne for Matrix<T, N, N>
-where
-    T: Mul<Output = T> + Copy + Zero + ConstOne,
-{
-    const ONE: Self = Self([[T::ONE; N]; N]);
 }
