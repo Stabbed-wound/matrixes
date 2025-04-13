@@ -76,7 +76,7 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
     }
 
     #[must_use]
-    pub fn transpose(&self) -> Matrix<T, C, R>
+    pub fn to_transpose(&self) -> Matrix<T, C, R>
     where
         T: Clone,
     {
