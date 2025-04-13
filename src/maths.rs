@@ -119,7 +119,10 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
         Ok(())
     }
 
-    pub fn scale(&mut self, factor: T) where T: MulAssign + Copy {
+    pub fn scale(&mut self, factor: T)
+    where
+        T: MulAssign + Copy,
+    {
         for elem in self {
             *elem *= factor;
         }
@@ -192,6 +195,28 @@ where
             .collect();
 
         Matrix::from(<[_; R]>::try_from(rows_vec).unwrap_or_else(|_| unreachable!()))
+    }
+}
+
+impl<T, const R: usize, const C: usize> AddAssign for Matrix<T, R, C>
+where
+    T: AddAssign,
+{
+    fn add_assign(&mut self, rhs: Self) {
+        for (lhs, rhs) in zip(self, rhs) {
+            *lhs += rhs;
+        }
+    }
+}
+
+impl<T, const R: usize, const C: usize> AddAssign<&Self> for Matrix<T, R, C>
+where
+    T: AddAssign + Copy,
+{
+    fn add_assign(&mut self, rhs: &Self) {
+        for (lhs, rhs) in zip(self, rhs) {
+            *lhs += *rhs;
+        }
     }
 }
 
