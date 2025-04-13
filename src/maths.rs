@@ -1,5 +1,5 @@
 use crate::{errors::IndexError, Matrix};
-use num_traits::Zero;
+use num_traits::{ConstOne, ConstZero, One, Zero};
 use std::{
     iter::zip,
     ops::{Add, AddAssign, Mul, MulAssign},
@@ -236,4 +236,40 @@ where
                 .fold(T::zero(), |acc, (lhs, rhs)| acc + *lhs * *rhs)
         })
     }
+}
+
+impl<T, const R: usize, const C: usize> Zero for Matrix<T, R, C>
+where
+    T: Add<Output = T> + Zero,
+{
+    fn zero() -> Self {
+        Self::from_fn(|_, _| T::zero())
+    }
+
+    fn is_zero(&self) -> bool {
+        self.iter().all(T::is_zero)
+    }
+}
+
+impl<T, const R: usize, const C: usize> ConstZero for Matrix<T, R, C>
+where
+    T: ConstZero + Copy,
+{
+    const ZERO: Self = Self([[T::ZERO; C]; R]);
+}
+
+impl<T, const N: usize> One for Matrix<T, N, N>
+where
+    T: Mul<Output = T> + Copy + Zero + One,
+{
+    fn one() -> Self {
+        Self([[T::one(); N]; N])
+    }
+}
+
+impl<T, const N: usize> ConstOne for Matrix<T, N, N>
+where
+    T: Mul<Output = T> + Copy + Zero + ConstOne,
+{
+    const ONE: Self = Self([[T::ONE; N]; N]);
 }
