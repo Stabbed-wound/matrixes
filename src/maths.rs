@@ -130,6 +130,15 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
     }
 }
 
+impl<T, const N: usize> Matrix<T, N, N> {
+    pub fn trace(&self) -> T
+    where
+        T: Zero + Copy + Add<Output = T>,
+    {
+        (0..N).fold(T::zero(), |acc, i| acc + self[(i, i)])
+    }
+}
+
 impl<T, const R: usize, const C: usize> Add for Matrix<T, R, C>
 where
     T: Add,
@@ -269,7 +278,7 @@ where
 
 impl<T, const R: usize, const C: usize> Sub for &Matrix<T, R, C>
 where
-    T: Sub + Copy
+    T: Sub + Copy,
 {
     type Output = Matrix<<T as Sub>::Output, R, C>;
 
@@ -281,7 +290,7 @@ where
                         .map(|(lhs, rhs)| *lhs - *rhs)
                         .collect::<Vec<_>>(),
                 )
-                    .unwrap_or_else(|_| unreachable!())
+                .unwrap_or_else(|_| unreachable!())
             })
             .collect();
 
@@ -291,7 +300,7 @@ where
 
 impl<T, const R: usize, const C: usize> SubAssign for Matrix<T, R, C>
 where
-    T: SubAssign
+    T: SubAssign,
 {
     fn sub_assign(&mut self, rhs: Self) {
         for (lhs, rhs) in zip(self, rhs) {
@@ -302,7 +311,7 @@ where
 
 impl<T, const R: usize, const C: usize> SubAssign<&Self> for Matrix<T, R, C>
 where
-    T: SubAssign + Copy
+    T: SubAssign + Copy,
 {
     fn sub_assign(&mut self, rhs: &Self) {
         for (lhs, rhs) in zip(self, rhs) {
