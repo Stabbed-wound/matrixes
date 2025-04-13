@@ -1,5 +1,6 @@
 use crate::{errors::IndexError, Matrix};
 use num_traits::{ConstOne, ConstZero, One, Zero};
+use std::ops::{Sub, SubAssign};
 use std::{
     iter::zip,
     ops::{Add, AddAssign, Mul, MulAssign},
@@ -216,6 +217,96 @@ where
     fn add_assign(&mut self, rhs: &Self) {
         for (lhs, rhs) in zip(self, rhs) {
             *lhs += *rhs;
+        }
+    }
+}
+
+impl<T, const R: usize, const C: usize> Sub for Matrix<T, R, C>
+where
+    T: Sub,
+{
+    type Output = Matrix<<T as Sub>::Output, R, C>;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        let rows_vec: Vec<_> = zip(self.0, rhs.0)
+            .map(|(lhs, rhs)| {
+                <[_; C]>::try_from(
+                    zip(lhs, rhs)
+                        .map(|(lhs, rhs)| lhs - rhs)
+                        .collect::<Vec<_>>(),
+                )
+                .unwrap_or_else(|_| unreachable!())
+            })
+            .collect();
+
+        Matrix(<[_; R]>::try_from(rows_vec).unwrap_or_else(|_| unreachable!()))
+    }
+}
+
+impl<T, const R: usize, const C: usize> Sub<&Self> for Matrix<T, R, C>
+where
+    T: Sub + Copy,
+{
+    type Output = Matrix<<T as Sub>::Output, R, C>;
+
+    #[allow(clippy::op_ref)]
+    fn sub(self, rhs: &Self) -> Self::Output {
+        &self - rhs
+    }
+}
+
+impl<T, const R: usize, const C: usize> Sub<Matrix<T, R, C>> for &Matrix<T, R, C>
+where
+    T: Sub + Copy,
+{
+    type Output = Matrix<<T as Sub>::Output, R, C>;
+
+    #[allow(clippy::op_ref)]
+    fn sub(self, rhs: Matrix<T, R, C>) -> Self::Output {
+        self - &rhs
+    }
+}
+
+impl<T, const R: usize, const C: usize> Sub for &Matrix<T, R, C>
+where
+    T: Sub + Copy
+{
+    type Output = Matrix<<T as Sub>::Output, R, C>;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        let rows_vec: Vec<_> = zip(&self.0, &rhs.0)
+            .map(|(lhs, rhs)| {
+                <[_; C]>::try_from(
+                    zip(lhs, rhs)
+                        .map(|(lhs, rhs)| *lhs - *rhs)
+                        .collect::<Vec<_>>(),
+                )
+                    .unwrap_or_else(|_| unreachable!())
+            })
+            .collect();
+
+        Matrix(<[_; R]>::try_from(rows_vec).unwrap_or_else(|_| unreachable!()))
+    }
+}
+
+impl<T, const R: usize, const C: usize> SubAssign for Matrix<T, R, C>
+where
+    T: SubAssign
+{
+    fn sub_assign(&mut self, rhs: Self) {
+        for (lhs, rhs) in zip(self, rhs) {
+            *lhs -= rhs;
+        }
+    }
+}
+
+impl<T, const R: usize, const C: usize> SubAssign<&Self> for Matrix<T, R, C>
+where
+    T: SubAssign + Copy
+{
+    fn sub_assign(&mut self, rhs: &Self) {
+        for (lhs, rhs) in zip(self, rhs) {
+            *lhs -= *rhs;
         }
     }
 }
