@@ -363,7 +363,7 @@ where
 
     fn mul(self, rhs: &Matrix<T, S, C>) -> Self::Output {
         Matrix::from_fn(|i, j| {
-            zip(self.get_row_unchecked(i), rhs.get_row_unchecked(j))
+            zip(self.get_row_unchecked(i), rhs.get_col_unchecked(j))
                 .fold(T::zero(), |acc, (lhs, rhs)| acc + *lhs * *rhs)
         })
     }
