@@ -1,6 +1,8 @@
+use crate::errors::TryFromSlicesError;
 use crate::Matrix;
 use num_traits::{One, Zero};
 use std::array;
+use std::ops::Deref;
 
 impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
     #[must_use]
@@ -42,21 +44,26 @@ impl<T, const R: usize, const C: usize> From<[[T; C]; R]> for Matrix<T, R, C> {
     }
 }
 
-macro_rules! try_from_try_into_array {
-    ($f:ty) => {
-        impl<'a, T, const R: usize, const C: usize> TryFrom<$f> for Matrix<T, R, C>
-        where
-            [[T; C]; R]: TryFrom<$f>,
-        {
-            type Error = <[[T; C]; R] as TryFrom<$f>>::Error;
-        
-            fn try_from(value: $f) -> Result<Self, Self::Error> {
-                Ok(Self(<[[T; C]; R]>::try_from(value)?))
-            }
-        }
-    };
-}
+impl<T, I, const R: usize, const C: usize> TryFrom<&[I]> for Matrix<T, R, C>
+where
+    I: Deref<Target = [T]>,
+    T: Copy,
+{
+    type Error = TryFromSlicesError;
 
-try_from_try_into_array!(&'a [[T; C]]);
-try_from_try_into_array!(&'a mut [[T; C]]);
-try_from_try_into_array!(Vec<[T; C]>);
+    fn try_from(value: &[I]) -> Result<Self, Self::Error> {
+        if value.len() != R {
+            return Err(TryFromSlicesError::Rows(value.len()));
+        }
+
+        let rows: Result<Vec<_>, TryFromSlicesError> = value
+            .iter()
+            .enumerate()
+            .map(|(i, row)| {
+                <[T; C]>::try_from(&**row).map_err(|_| TryFromSlicesError::Columns(row.len(), i))
+            })
+            .collect();
+
+        rows.map(|rows| Self(<[_; R]>::try_from(rows).unwrap_or_else(|_| unreachable!())))
+    }
+}
