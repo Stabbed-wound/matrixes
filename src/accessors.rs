@@ -97,46 +97,126 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
 // get_unchecked
 
 impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
-    pub const fn get_unchecked(&self, row: usize, col: usize) -> &T {
-        &self.0[row][col]
+    pub const unsafe fn get_unchecked(&self, row: usize, col: usize) -> &T {
+        debug_assert!(
+            row < R && col < C,
+            "Matrix::get_unchecked requires that the index is within the matrix"
+        );
+
+        let data_ptr = &raw const self.0;
+        // SAFETY
+        // Upheld by caller
+        let row_ptr = unsafe { data_ptr.add(row) }.cast::<T>();
+        // SAFETY
+        // Upheld by caller
+        unsafe { &*row_ptr.add(col) }
     }
 
-    pub fn get_row_unchecked(&self, row: usize) -> [&T; C] {
-        array::from_fn(|col| &self.0[row][col])
+    pub unsafe fn get_row_unchecked(&self, row: usize) -> [&T; C] {
+        debug_assert!(
+            row < R,
+            "Matrix::get_row_unchecked requires that the index is within the matrix"
+        );
+
+        let data_ptr = (&raw const self.0).cast::<[T; C]>();
+        // SAFETY
+        // Upheld by caller
+        let row_ptr = unsafe { data_ptr.add(row) }.cast::<T>();
+
+        array::from_fn(|col| {
+            // SAFETY
+            // Upheld by caller
+            unsafe { &*row_ptr.add(col) }
+        })
     }
 
-    pub fn get_col_unchecked(&self, col: usize) -> [&T; R] {
-        array::from_fn(|row| &self.0[row][col])
+    pub unsafe fn get_col_unchecked(&self, col: usize) -> [&T; R] {
+        debug_assert!(
+            col < C,
+            "Matrix::get_col_unchecked requires that the index is within the matrix"
+        );
+
+        let data_ptr = (&raw const self.0).cast::<T>();
+        // SAFETY
+        // Upheld by caller
+        let col_ptr = unsafe { data_ptr.add(col) };
+
+        array::from_fn(|row| {
+            // SAFETY
+            // Upheld by caller
+            unsafe { &*col_ptr.add(row * C) }
+        })
     }
 
-    pub fn get_rows_unchecked<I>(&self, rows: I) -> Vec<[&T; C]>
+    pub unsafe fn get_rows_unchecked<I>(&self, rows: I) -> Vec<[&T; C]>
     where
-        I: IntoIterator<Item = usize>,
+        I: IntoIterator<Item=usize>,
     {
         rows.into_iter()
-            .map(|row| self.get_row_unchecked(row))
+            .map(|row| {
+                debug_assert!(
+                    row < R,
+                    "Matrix::get_rows_unchecked requires that the index is within the matrix"
+                );
+
+                // SAFETY
+                // Upheld by caller
+                unsafe { self.get_row_unchecked(row) }
+            })
             .collect()
     }
 
-    pub fn get_cols_unchecked<I>(&self, cols: I) -> Vec<[&T; R]>
+    pub unsafe fn get_cols_unchecked<I>(&self, cols: I) -> Vec<[&T; R]>
     where
-        I: IntoIterator<Item = usize>,
+        I: IntoIterator<Item=usize>,
     {
         cols.into_iter()
-            .map(|col| self.get_col_unchecked(col))
+            .map(|col| {
+                debug_assert!(
+                    col < C,
+                    "Matrix::get_cols_unchecked requires that the index is within the matrix"
+                );
+
+                // SAFETY
+                // Upheld by caller
+                unsafe { self.get_col_unchecked(col) }
+            })
             .collect()
     }
 
-    pub fn get_area_unchecked<I1, I2>(&self, rows: I1, cols: I2) -> Vec<Vec<&T>>
+    pub unsafe fn get_area_unchecked<I1, I2>(&self, rows: I1, cols: I2) -> Vec<Vec<&T>>
     where
-        I1: IntoIterator<Item = usize>,
-        I2: IntoIterator<Item = usize>,
+        I1: IntoIterator<Item=usize>,
+        I2: IntoIterator<Item=usize>,
         I2::IntoIter: Clone,
     {
         let cols = cols.into_iter();
+        let data_ptr = (&raw const self.0).cast::<[T; C]>();
 
         rows.into_iter()
-            .map(|row| cols.clone().map(|col| &self.0[row][col]).collect())
+            .map(|row| {
+                debug_assert!(
+                    row < R,
+                    "Matrix::get_area_unchecked requires that the index is within the matrix"
+                );
+
+                // SAFETY
+                // Upheld by caller
+                let row_ptr = unsafe { data_ptr.add(row) }.cast::<T>();
+
+                cols.clone()
+                    .map(|col| {
+                        debug_assert!(
+                            col < C,
+                            "Matrix::get_area_unchecked requires that the index is within the matrix"
+                        );
+
+                        // SAFETY
+                        // Upheld by caller
+                        unsafe { &*row_ptr.add(col) }
+                    })
+                    .collect()
+            })
             .collect()
     }
 }
@@ -201,7 +281,7 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
     /// rows must have no duplicates
     pub unsafe fn get_mut_rows<I>(&mut self, rows: I) -> Result<Vec<[&mut T; C]>, IndexError>
     where
-        I: IntoIterator<Item = usize>,
+        I: IntoIterator<Item=usize>,
     {
         let self_ptr = self as *mut Self;
 
@@ -220,7 +300,7 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
     /// cols must have no duplicates
     pub unsafe fn get_mut_cols<I>(&mut self, cols: I) -> Result<Vec<[&mut T; R]>, IndexError>
     where
-        I: IntoIterator<Item = usize>,
+        I: IntoIterator<Item=usize>,
     {
         let self_ptr = self as *mut Self;
 
@@ -245,8 +325,8 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
         cols: I2,
     ) -> Result<Vec<Vec<&mut T>>, IndexError>
     where
-        I1: IntoIterator<Item = usize>,
-        I2: IntoIterator<Item = usize>,
+        I1: IntoIterator<Item=usize>,
+        I2: IntoIterator<Item=usize>,
         I2::IntoIter: Clone,
     {
         let self_ptr = self as *mut Self;
@@ -269,32 +349,72 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
 // get_unchecked_mut
 
 impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
-    pub const fn get_unchecked_mut(&mut self, row: usize, col: usize) -> &mut T {
-        &mut self.0[row][col]
+    pub const unsafe fn get_unchecked_mut(&mut self, row: usize, col: usize) -> &mut T {
+        debug_assert!(
+            row < R && col < C,
+            "Matrix::get_unchecked_mut requires that the index is within the matrix"
+        );
+
+        let data_ptr = &raw mut self.0;
+        // SAFETY
+        // Upheld by caller
+        let row_ptr = unsafe { data_ptr.add(row) }.cast::<T>();
+        unsafe { &mut *row_ptr.add(col) }
     }
 
-    pub fn get_row_unchecked_mut(&mut self, row: usize) -> [&mut T; C] {
-        let self_ptr = self as *mut Self;
+    pub unsafe fn get_row_unchecked_mut(&mut self, row: usize) -> [&mut T; C] {
+        debug_assert!(
+            row < R,
+            "Matrix::get_row_unchecked_mut requires that the index is within the matrix"
+        );
 
-        array::from_fn(|col| &mut unsafe { &mut *self_ptr }.0[row][col])
+        let data_ptr = (&raw mut self.0).cast::<[T; C]>();
+        // SAFETY
+        // Upheld by caller
+        let row_ptr = unsafe { data_ptr.add(row) }.cast::<T>();
+
+        array::from_fn(|col| {
+            // SAFETY
+            // Upheld by caller
+            unsafe { &mut *row_ptr.add(col) }
+        })
     }
 
-    pub fn get_col_unchecked_mut(&mut self, col: usize) -> [&mut T; R] {
-        let self_ptr = self as *mut Self;
+    pub unsafe fn get_col_unchecked_mut(&mut self, col: usize) -> [&mut T; R] {
+        debug_assert!(
+            col < C,
+            "Matrix::get_col_unchecked_mut requires that the index is within the matrix"
+        );
 
-        array::from_fn(|row| &mut unsafe { &mut *self_ptr }.0[row][col])
+        let data_ptr = (&raw mut self.0).cast::<T>();
+        // SAFETY
+        // Upheld by caller
+        let col_ptr = unsafe { data_ptr.add(col) };
+
+        array::from_fn(|row| {
+            // SAFETY
+            // Upheld by caller
+            unsafe { &mut *col_ptr.add(row * C) }
+        })
     }
 
     /// # Safety
     /// rows must have no duplicates
     pub unsafe fn get_rows_unchecked_mut<I>(&mut self, rows: I) -> Vec<[&mut T; C]>
     where
-        I: IntoIterator<Item = usize>,
+        I: IntoIterator<Item=usize>,
     {
         let self_ptr = self as *mut Self;
 
         rows.into_iter()
-            .map(|row| unsafe { &mut *self_ptr }.get_row_unchecked_mut(row))
+            .map(|row| {
+                debug_assert!(
+                    row < R,
+                    "Matrix::get_rows_unchecked_mut requires that the index is within the matrix"
+                );
+
+                unsafe { { &mut *self_ptr }.get_row_unchecked_mut(row) }
+            })
             .collect()
     }
 
@@ -302,12 +422,19 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
     /// cols must have no duplicates
     pub unsafe fn get_cols_unchecked_mut<I>(&mut self, cols: I) -> Vec<[&mut T; R]>
     where
-        I: IntoIterator<Item = usize>,
+        I: IntoIterator<Item=usize>,
     {
         let self_ptr = self as *mut Self;
 
         cols.into_iter()
-            .map(|col| unsafe { &mut *self_ptr }.get_col_unchecked_mut(col))
+            .map(|col| {
+                debug_assert!(
+                    col < C,
+                    "Matrix::get_col_unchecked_mut requires that the index is within the matrix"
+                );
+
+                unsafe { { &mut *self_ptr }.get_col_unchecked_mut(col) }
+            })
             .collect()
     }
 
@@ -316,17 +443,31 @@ impl<T, const R: usize, const C: usize> Matrix<T, R, C> {
     /// - cols must have no duplicates
     pub unsafe fn get_area_unchecked_mut<I1, I2>(&mut self, rows: I1, cols: I2) -> Vec<Vec<&mut T>>
     where
-        I1: IntoIterator<Item = usize>,
-        I2: IntoIterator<Item = usize>,
+        I1: IntoIterator<Item=usize>,
+        I2: IntoIterator<Item=usize>,
         I2::IntoIter: Clone,
     {
-        let self_ptr = self as *mut Self;
         let cols = cols.into_iter();
+        let data_ptr = (&raw mut self.0).cast::<[T; C]>();
 
         rows.into_iter()
             .map(|row| {
+                debug_assert!(
+                    row < R,
+                    "Matrix::get_area_unchecked_mut requires that the index is within the matrix"
+                );
+
+                let row_ptr = unsafe { data_ptr.add(row) }.cast::<T>();
+
                 cols.clone()
-                    .map(|col| &mut unsafe { &mut *self_ptr }.0[row][col])
+                    .map(|col| {
+                        debug_assert!(
+                            col < C,
+                            "Matrix::get_area_unchecked_mut requires that the index is within the matrix"
+                        );
+
+                        unsafe { &mut *row_ptr.add(col) }
+                    })
                     .collect()
             })
             .collect()
@@ -337,12 +478,12 @@ impl<T, const R: usize, const C: usize> Index<(usize, usize)> for Matrix<T, R, C
     type Output = T;
 
     fn index(&self, (row, col): (usize, usize)) -> &Self::Output {
-        self.get_unchecked(row, col)
+        &self.0[row][col]
     }
 }
 
 impl<T, const R: usize, const C: usize> IndexMut<(usize, usize)> for Matrix<T, R, C> {
     fn index_mut(&mut self, (row, col): (usize, usize)) -> &mut Self::Output {
-        self.get_unchecked_mut(row, col)
+        &mut self.0[row][col]
     }
 }
